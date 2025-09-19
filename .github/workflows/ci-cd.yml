@@ -22,12 +22,20 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install SonarScanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner.zip
+          export PATH=$PWD/sonar-scanner-5.0.1.3006-linux/bin:$PATH
+          echo "SonarScanner installed at $PWD/sonar-scanner-5.0.1.3006-linux/bin"
+
       - name: Run SonarCloud analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORG: ${{ secrets.SONAR_ORG }}
         run: |
+          export PATH=$PWD/sonar-scanner-5.0.1.3006-linux/bin:$PATH
           sonar-scanner \
             -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
             -Dsonar.organization=${SONAR_ORG} \
@@ -78,6 +86,9 @@ jobs:
 
       - name: Run Docker container
         run: |
+          # Stop existing container if running
           docker stop demo-app || true
           docker rm demo-app || true
+          # Run new container
           docker run -d --name demo-app -p 5000:5000 ${{ secrets.DOCKER_USERNAME }}/demo-app:${{ github.sha }}
+
